@@ -1,7 +1,11 @@
 # BottomBar
-<img src="https://raw.githubusercontent.com/roughike/BottomBar/master/demo1.gif" width="278" height="492" /> <img src="https://raw.githubusercontent.com/roughike/BottomBar/master/demo2.gif" width="278" height="492" />
+<img src="https://raw.githubusercontent.com/roughike/BottomBar/master/scrolling_demo.gif" width="30%" /> <img src="https://raw.githubusercontent.com/roughike/BottomBar/master/demo2-badge.gif" width="30%" /> <img src="https://raw.githubusercontent.com/roughike/BottomBar/master/screenshot_tablet.png" width="33%" /> 
 
-## Have issues? [Common problems and solutions](https://github.com/roughike/BottomBar/blob/master/README.md#common-problems-and-solutions)
+**Don't send me pull requests just yet, not until the dust settles.**
+
+**[How to contribute](https://github.com/roughike/BottomBar/blob/master/README.md#contributions)**
+
+[Common problems and solutions](https://github.com/roughike/BottomBar/blob/master/README.md#common-problems-and-solutions)
 
 ## What?
 
@@ -9,16 +13,16 @@ A custom view component that mimics the new [Material Design Bottom Navigation p
 
 **(currently under active development, expect to see new releases almost daily)**
 
-## Does it work on my Grandpa's HTC Dream?
+## Does it work on my Grandpa Gary's HTC Dream?
 
-Nope. The current minSDK version is API level 14.
+Nope. The current minSDK version is **API level 11 (Honeycomb).**
 
-Your uncle's Galaxy S Mini will probably be supported in the future though. 
+Your uncle Bob's Galaxy S Mini will probably be supported in the future though. 
 
 ## Gimme that Gradle sweetness, pls?
 
 ```groovy
-compile 'com.roughike:bottom-bar:1.0.8'
+compile 'com.roughike:bottom-bar:1.2.4'
 ```
 
 **Maven:**
@@ -26,7 +30,7 @@ compile 'com.roughike:bottom-bar:1.0.8'
 <dependency>
   <groupId>com.roughike</groupId>
   <artifactId>bottom-bar</artifactId>
-  <version>1.0.8</version>
+  <version>1.2.4</version>
   <type>pom</type>
 </dependency>
 ```
@@ -61,11 +65,18 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mBottomBar = BottomBar.attach(this, savedInstanceState);
-        mBottomBar.setItemsFromMenu(R.menu.bottombar_menu, new OnMenuTabSelectedListener() {
+        mBottomBar.setItemsFromMenu(R.menu.bottombar_menu, new OnMenuTabClickListener() {
             @Override
-            public void onMenuItemSelected(int resId) {
+            public void onMenuTabSelected(@IdRes int menuItemId) {
                 if (resId == R.id.bottomBarItemOne) {
-                    // the user selected item number one
+                    // The user selected item number one.
+                }
+            }
+
+            @Override
+            public void onMenuTabReSelected(@IdRes int menuItemId) {
+                if (resId == R.id.bottomBarItemOne) {
+                    // The user reselected item number one, scroll your content to top.
                 }
             }
         });
@@ -90,34 +101,102 @@ public class MainActivity extends AppCompatActivity {
 }
 ```
 
-#### Can it handle my Fragments and replace them automagically when a different tab is selected?
+## Badges
 
-Yep yep yep! Just call ```setFragmentItems()``` instead of ```setItemsFromMenu()```:
+You can easily add badges for showing an unread message count or new items / whatever you like.
 
 ```java
-mBottomBar.setFragmentItems(getSupportFragmentManager(), R.id.fragmentContainer,
-    new BottomBarFragment(SampleFragment.newInstance("Content for recents."), R.drawable.ic_recents, "Recents"),
-    new BottomBarFragment(SampleFragment.newInstance("Content for favorites."), R.drawable.ic_favorites, "Favorites"),
-    new BottomBarFragment(SampleFragment.newInstance("Content for nearby stuff."), R.drawable.ic_nearby, "Nearby")
-);
+// Make a Badge for the first tab, with red background color and a value of "13".
+BottomBarBadge unreadMessages = mBottomBar.makeBadgeForTabAt(0, "#FF0000", 13);
+
+// Control the badge's visibility
+unreadMessages.show();
+unreadMessages.hide();
+
+// Change the displayed count for this badge.
+unreadMessages.setCount(4);
+
+// Change the show / hide animation duration.
+unreadMessages.setAnimationDuration(200);
+
+// If you want the badge be shown always after unselecting the tab that contains it.
+unreadMessages.setAutoShowAfterUnSelection(true);
 ```
 
-#### I hate Fragments and wanna do everything by myself!
+## Customization
 
-That's alright, you can also do it the hard way if you're living on the edge.
+```java
+// Disable the left bar on tablets and behave exactly the same on mobile and tablets instead.
+mBottomBar.noTabletGoodness();
+
+// Use the dark theme. Ignored on mobile when there are more than three tabs.
+mBottomBar.useDarkTheme(true);
+
+// Set the color for the active tab. Ignored on mobile when there are more than three tabs.
+mBottomBar.setActiveTabColor("#009688");
+
+// Use custom text appearance in tab titles.
+mBottomBar.setTextAppearance(R.style.MyTextAppearance);
+
+// Use custom typeface that's located at the "/src/main/assets" directory. If using with
+// custom text appearance, set the text appearance first.
+mBottomBar.setTypeFace("MyFont.ttf");
+```
+
+#### What about hiding it automatically on scroll?
+
+Easy-peasy!
+
+**MainActivity.java:**
+
+```java
+// Instead of attach(), use attachShy:
+mBottomBar = BottomBar.attachShy((CoordinatorLayout) findViewById(R.id.myCoordinator), 
+    findViewById(R.id.myScrollingContent), savedInstanceState);
+```
+
+**activity_main.xml:**
+
+```xml
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/myCoordinator"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
+
+    <android.support.v4.widget.NestedScrollView
+        android:id="@+id/myScrollingContent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- Your loooong scrolling content here -->
+
+    </android.support.v4.widget.NestedScrollView>
+
+</android.support.design.widget.CoordinatorLayout>
+```
+
+#### I don't want to set items from a menu resource!
+
+That's alright, you can also do it the hard way if you like living on the edge.
 
 ```java
 mBottomBar.setItems(
-        new BottomBarTab(R.drawable.ic_recents, "Recents"),
-        new BottomBarTab(R.drawable.ic_favorites, "Favorites"),
-        new BottomBarTab(R.drawable.ic_nearby, "Nearby")
+  new BottomBarTab(R.drawable.ic_recents, "Recents"),
+  new BottomBarTab(R.drawable.ic_favorites, "Favorites"),
+  new BottomBarTab(R.drawable.ic_nearby, "Nearby")
 );
 
 // Listen for tab changes
-mBottomBar.setOnItemSelectedListener(new OnTabSelectedListener() {
+mBottomBar.setOnTabClickListener(new OnTabClickListener() {
     @Override
-    public void onItemSelected(int position) {
-        // user selected a different tab
+    public void onTabSelected(int position) {
+        // The user selected a tab at the specified position
+    }
+
+    @Override
+    public void onTabReSelected(int position) {
+        // The user reselected a tab at the specified position!
     }
 });
 ```
@@ -142,9 +221,9 @@ Probably because you're doing some next-level advanced Android stuff (such as us
 mBottomBar.noTopOffset();
 ```
 
-#### I don't like the awesome transparent Navigation Bar / it behaves poorly / breaks my layout!
+#### I don't like the awesome transparent Navigation Bar!
 
-You can disable it. I'm squashing bugs as fast as I can, but they are hard to find.
+You can disable it.
 
 ```java
 mBottomBar.noNavBarGoodness();
@@ -173,7 +252,11 @@ Send me a pull request with modified README.md to get a shoutout!
 
 ## Contributions
 
-Feel free to create issues / pull requests.
+Feel free to create issues. 
+
+**Don't send me pull requests just yet, not until the dust settles.**
+
+I'm fixing issues and busting my ass to make this library better, _several hours_ every day. Your hard work could be for nothing, as I'm probably fixing / implementing the same problems that you are.
 
 ## License
 
